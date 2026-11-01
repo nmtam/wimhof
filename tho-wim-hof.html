@@ -262,6 +262,21 @@ fieldset:disabled{opacity:.55}
 .vnote{font-size:13px;color:var(--muted);text-align:center;max-width:38ch;margin:0}
 .session[data-state="next"] .orb,.pip.nx{animation:blink .45s ease-in-out infinite alternate}
 @keyframes blink{from{opacity:1}to{opacity:.2}}
+.hist{max-width:720px;margin:0 auto;display:grid;gap:16px}
+.hist h2{margin:0;font-size:22px}
+.hstats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.hstats div{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;display:grid;gap:2px;text-align:center}
+.hstats b{font-family:var(--f-num);font-size:26px;font-weight:600;font-variant-numeric:tabular-nums}
+.hstats span{font-size:12.5px;color:var(--muted)}
+.hlist{list-style:none;margin:0 0 12px;padding:0;display:grid;gap:8px}
+.hlist li{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+.hmain{flex:1 1 220px;display:grid;gap:2px;min-width:0}
+.hmain span{font-size:13.5px;color:var(--muted)}
+.htag{font-size:12.5px;border:1px solid var(--line);border-radius:999px;padding:2px 10px;color:var(--muted)}
+.htag.ok{color:var(--accent);border-color:var(--accent)}
+.hdel{padding:6px 14px;font-size:13.5px}
+.hempty,.hist .note{color:var(--muted);margin:0}
+.hist .note{font-size:13px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 
@@ -274,6 +289,7 @@ fieldset:disabled{opacity:.55}
     <nav class="tabs" role="tablist">
       <button class="tab" role="tab" id="tab-guide" aria-controls="view-guide" data-i="tabGuide">Hướng dẫn</button>
       <button class="tab" role="tab" id="tab-train" aria-controls="view-train" data-i="tabTrain">Tập luyện</button>
+      <button class="tab" role="tab" id="tab-history" aria-controls="view-history" data-i="tabHistory">Lịch sử</button>
     </nav>
     <div class="lang" id="lang"></div>
   </div>
@@ -350,6 +366,14 @@ fieldset:disabled{opacity:.55}
       </aside>
     </div>
   </section>
+
+  <section id="view-history" role="tabpanel" aria-labelledby="tab-history" hidden>
+    <div class="hist">
+      <h2 data-i="histTitle"></h2>
+      <div class="hstats" id="hStats"></div>
+      <div id="hBody"></div>
+    </div>
+  </section>
 </main>
 
 <div class="scrim" id="scrim" hidden>
@@ -369,7 +393,9 @@ const FLAG_EN='<svg viewBox="0 0 60 30" preserveAspectRatio="xMidYMid slice"><cl
 const WARN_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/></svg>';
 
 const T={
- vi:{brand:"Thở Wim Hof",tabGuide:"Hướng dẫn",tabTrain:"Tập luyện",prev:"Trang trước",next:"Trang sau",
+ vi:{brand:"Thở Wim Hof",tabGuide:"Hướng dẫn",tabTrain:"Tập luyện",tabHistory:"Lịch sử",histTitle:"Lịch sử buổi tập",hCount:"Số buổi",hTotal:"Tổng thời gian (phút)",hStreak:"Ngày liên tiếp",
+  hDone:"Hoàn thành",hEarly:"Dừng sớm",hDel:"Xoá",hDelAll:"Xoá toàn bộ",hConfirm:"Xoá buổi tập này khỏi lịch sử?",hConfirmAll:"Xoá toàn bộ lịch sử? Không khôi phục được.",
+  hEmpty:"Chưa có buổi nào. Tập xong ít nhất một lượt nín thở thì buổi tập sẽ được ghi lại ở đây.",hGo:"Sang tab Tập luyện",hSaved:"Lưu trong trình duyệt này.",prev:"Trang trước",next:"Trang sau",
   safetyTitle:"Cảnh báo an toàn",safetyShort:"Chỉ tập khi ngồi hoặc nằm. Không tập dưới nước hay khi lái xe.",safetyMore:"Xem đầy đủ",
   settings:"Thiết lập",saved:"Tự lưu trên trình duyệt này.",locked:"Đang tập. Dừng lại để đổi thiết lập.",
   breaths:"Số hơi thở mỗi vòng",rounds:"Số vòng",hold1:"Số giây nín thở vòng 1",holdInc:"Số giây tăng thêm mỗi vòng",
@@ -387,7 +413,9 @@ const T={
    "Không dành cho phụ nữ có thai, người động kinh, người bệnh tim mạch nặng, cao huyết áp không kiểm soát.",
    "Nếu cần thở trước khi hết giờ, cứ thở, không gượng ép.",
    "Tê, ngứa ran hay hơi chóng mặt là phản ứng thường gặp. Nếu thấy khó chịu, dừng lại và thở bình thường."]},
- en:{brand:"Wim Hof Breathing",tabGuide:"Guide",tabTrain:"Practice",prev:"Previous slide",next:"Next slide",
+ en:{brand:"Wim Hof Breathing",tabGuide:"Guide",tabTrain:"Practice",tabHistory:"History",histTitle:"Session history",hCount:"Sessions",hTotal:"Total time (min)",hStreak:"Days in a row",
+  hDone:"Complete",hEarly:"Stopped early",hDel:"Delete",hDelAll:"Delete all",hConfirm:"Delete this session from the history?",hConfirmAll:"Delete the whole history? This cannot be undone.",
+  hEmpty:"No sessions yet. Once you finish at least one breath hold, the session is recorded here.",hGo:"Go to Practice",hSaved:"Saved in this browser.",prev:"Previous slide",next:"Next slide",
   safetyTitle:"Safety warning",safetyShort:"Only practise sitting or lying down. Never in water or while driving.",safetyMore:"Read more",
   settings:"Settings",saved:"Saved automatically in this browser.",locked:"Session running. Stop to change settings.",
   breaths:"Breaths per round",rounds:"Rounds",hold1:"Hold in round 1",holdInc:"Extra hold each round",
@@ -470,7 +498,8 @@ const DEF={breaths:30,rounds:3,hold1:30,holdInc:30,speed:"std"};
 const LIM={breaths:[20,60,1],rounds:[1,10,1],hold1:[15,180,5],holdInc:[0,60,5]};
 let S=Object.assign({},DEF,store.get("whm.settings",{}));
 let lang=store.get("whm.lang","vi"); if(!T[lang]) lang="vi";
-let tab=store.get("whm.tab","guide");
+const TABS=["guide","train","history"];
+let tab=store.get("whm.tab","guide"); if(!TABS.includes(tab)) tab="guide";
 let sound=store.get("whm.sound",true);
 let slide=0, dir=1;
 
@@ -479,6 +508,31 @@ const t=k=>T[lang][k];
 const fmt=s=>Math.floor(s/60)+":"+String(Math.round(s%60)).padStart(2,"0");
 const holdOf=i=>S.hold1+S.holdInc*i;
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* ---------- lịch sử ---------- */
+const HIST_MAX=500;
+const histOk=e=>{
+  const n=(v,k)=>Number.isFinite(v)&&v>=LIM[k][0]&&v<=LIM[k][1];
+  return e&&typeof e==="object"&&Number.isFinite(e.id)&&(e.lang==="vi"||e.lang==="en")&&n(e.breaths,"breaths")&&n(e.rounds,"rounds")
+    &&n(e.hold1,"hold1")&&n(e.holdInc,"holdInc")&&!!TEMPO[e.speed]&&Number.isInteger(e.roundsDone)&&e.roundsDone>=0&&e.roundsDone<=e.rounds
+    &&typeof e.done==="boolean"&&Number.isFinite(e.secs)&&e.secs>=0;
+};
+function histLoad(){
+  const h=store.get("whm.history",null);
+  if(!h||typeof h!=="object"||h.v!==1||!Array.isArray(h.items)) return {v:1,items:[]};
+  return {v:1,items:h.items.filter(histOk).slice(-HIST_MAX)};
+}
+function histAdd(h,entry){
+  return {v:1,items:h.items.filter(x=>x.id!==entry.id).concat([entry]).slice(-HIST_MAX)};
+}
+const histSave=h=>store.set("whm.history",h);
+const dayKey=d=>d.getFullYear()+"-"+d.getMonth()+"-"+d.getDate();
+function histStats(items,now){
+  const days=new Set(items.map(x=>dayKey(new Date(x.id))));
+  let d=new Date(now); if(!days.has(dayKey(d))) d=new Date(d.getFullYear(),d.getMonth(),d.getDate()-1);
+  let streak=0; while(days.has(dayKey(d))){ streak++; d=new Date(d.getFullYear(),d.getMonth(),d.getDate()-1); }
+  return {count:items.length,totalSecs:items.reduce((a,x)=>a+x.secs,0),streak};
+}
 
 /* ---------- language ---------- */
 function renderLang(){
@@ -489,17 +543,39 @@ function applyLang(){
   $$("[data-i]").forEach(el=>{const v=t(el.dataset.i); if(typeof v==="string") el.textContent=v;});
   $("#prev").setAttribute("aria-label",t("prev")); $("#next").setAttribute("aria-label",t("next"));
   $("#mList").innerHTML=t("safety").map(x=>`<li>${esc(x)}</li>`).join("");
-  renderLang(); renderSlide(); renderSession(); renderPlan();
+  renderLang(); renderSlide(); renderSession(); renderPlan(); renderHistory();
 }
 document.addEventListener("click",e=>{const b=e.target.closest("[data-lang]"); if(b){lang=b.dataset.lang;store.set("whm.lang",lang);applyLang();loadVoices(lang);relangVoices();}});
 
 /* ---------- tabs ---------- */
 function setTab(x){
   tab=x; store.set("whm.tab",x);
-  $("#tab-guide").setAttribute("aria-selected",x==="guide"); $("#tab-train").setAttribute("aria-selected",x==="train");
-  $("#view-guide").hidden=x!=="guide"; $("#view-train").hidden=x!=="train";
+  if(x==="history") renderHistory();
+  for(const n of TABS){ $("#tab-"+n).setAttribute("aria-selected",x===n); $("#view-"+n).hidden=x!==n; }
 }
-$("#tab-guide").onclick=()=>setTab("guide"); $("#tab-train").onclick=()=>setTab("train");
+for(const n of TABS) $("#tab-"+n).onclick=()=>setTab(n);
+
+/* ---------- màn hình lịch sử ---------- */
+function renderHistory(){
+  if(tab!=="history") return;
+  const items=histLoad().items, st=histStats(items,Date.now());
+  const stat=(k,v)=>`<div><b>${v}</b><span>${esc(t(k))}</span></div>`;
+  $("#hStats").innerHTML=stat("hCount",st.count)+stat("hTotal",Math.round(st.totalSecs/60))+stat("hStreak",st.streak);
+  if(!items.length){
+    $("#hBody").innerHTML=`<p class="hempty">${esc(t("hEmpty"))}</p><button class="btn primary" data-hgo>${esc(t("hGo"))}</button>`; return;
+  }
+  const rows=items.slice().reverse().map(x=>`<li><div class="hmain"><b>${esc(new Date(x.id).toLocaleString(lang))}</b>
+    <span>${x.breaths} ${esc(t("uBreath"))} × ${x.rounds} ${esc(t("uRound"))} · ${x.roundsDone}/${x.rounds} ${esc(t("uRound"))} · ${esc(fmt(x.secs))}</span></div>
+    <span class="htag${x.done?" ok":""}">${esc(t(x.done?"hDone":"hEarly"))}</span>
+    <button class="btn hdel" data-hdel="${x.id}">${esc(t("hDel"))}</button></li>`).join("");
+  $("#hBody").innerHTML=`<ul class="hlist">${rows}</ul><p class="note">${esc(t("hSaved"))}</p><button class="btn" data-hdelall>${esc(t("hDelAll"))}</button>`;
+}
+$("#view-history").addEventListener("click",e=>{
+  const d=e.target.closest("[data-hdel]");
+  if(d){ if(confirm(t("hConfirm"))){ const h=histLoad(); histSave({v:1,items:h.items.filter(x=>String(x.id)!==d.dataset.hdel)}); renderHistory(); } return; }
+  if(e.target.closest("[data-hdelall]")){ if(confirm(t("hConfirmAll"))){ histSave({v:1,items:[]}); renderHistory(); } return; }
+  if(e.target.closest("[data-hgo]")) setTab("train");
+});
 
 /* ---------- slides ---------- */
 function slideHTML(s){
@@ -762,7 +838,7 @@ async function startSession(){
   if(window.speechSynthesis){ try{ const u=new SpeechSynthesisUtterance(" "); u.volume=0; speechSynthesis.speak(u); }catch(e){} }
   await Promise.race([loadVoices(lang),new Promise(r=>setTimeout(r,4000))]); starting=false;
   const out=AC.createGain(); out.connect(master);
-  R={plan:buildPlan(S),t0:AC.currentTime,paused:false,pausedAt:0,ei:0,nodes:[],out,cue:"",closing:false,mu:null,tok:Math.random()};
+  R={plan:buildPlan(S),cfg:Object.assign({},S),startedAt:Date.now(),t0:AC.currentTime,paused:false,pausedAt:0,ei:0,nodes:[],out,cue:"",closing:false,mu:null,tok:Math.random()};
   const r=R; scheduleAll(r);
   loadVoices(lang).then(()=>{ if(R===r) scheduleVoices(r); }); /* giải mã xong sau 4 giây chờ thì vẫn hẹn được */
   ended=false; lockOn(); renderControls(); renderPips();
@@ -812,6 +888,13 @@ function stopSession(toDone){
   out.gain.cancelScheduledValues(now); out.gain.setValueAtTime(out.gain.value,now); out.gain.linearRampToValueAtTime(0,now+.15);
   setTimeout(()=>{ nodes.forEach(x=>{try{x.n.stop()}catch(e){}}); try{out.disconnect()}catch(e){}
     if(!R&&!starting) AC.suspend(); /* không tập thì cho âm thanh nghỉ, đỡ pin */ },250);
+  try{
+    const holds=R.plan.ph.filter(p=>p.type==="hold"), c=clock();
+    const roundsDone=toDone?holds.length:holds.filter(p=>p.start+p.dur<=c).length;
+    if(roundsDone>=1){ const g=R.cfg;
+      histSave(histAdd(histLoad(),{id:R.startedAt,lang,breaths:g.breaths,rounds:holds.length,hold1:g.hold1,holdInc:g.holdInc,speed:g.speed,
+        roundsDone,done:!!toDone,secs:Math.round(Math.min(c,R.plan.total))})); }
+  }catch(e){}
   R=null; ended=!!toDone; lockOff(); renderSession();
 }
 function togglePause(){

@@ -15,7 +15,7 @@ Web app hỗ trợ tập thở theo phương pháp Wim Hof. Dùng cá nhân (m�
 
 ## Cách app hoạt động
 
-- Hai tab: **Hướng dẫn** (slide giới thiệu) và **Tập luyện** (quả cầu thở + cột thiết lập).
+- Ba tab: **Hướng dẫn** (slide giới thiệu), **Tập luyện** (quả cầu thở + cột thiết lập) và **Lịch sử** (số buổi, tổng phút, ngày liên tiếp, danh sách buổi, xoá từng buổi hoặc toàn bộ).
 - Chữ hiển thị nằm trong `T` (nhãn giao diện), `SLIDES` (nội dung slide), `CLOSING` (lời kết); mỗi mục có đủ `vi` và `en`. Sửa chữ phải sửa cả hai ngôn ngữ.
 - Buổi tập do `buildPlan` dựng thành dòng thời gian; đồng hồ chạy theo `AudioContext`. Mặc định 30 hơi x 3 vòng, nín thở vòng 1 là 30 giây, mỗi vòng sau tăng 30 giây. Giới hạn: 20-60 hơi, 1-10 vòng, nín 15-180 giây, tăng 0-60 giây. Lượt phục hồi cố định 15 giây.
 - Âm thanh: giọng đọc từ mp3 nhúng (`VOICE_FILES`); nếu thiếu thì dùng giọng đọc của trình duyệt (`speechSynthesis`). Tiếng thở, chuông, nhạc nền do code tự tạo bằng Web Audio.
@@ -24,7 +24,8 @@ Web app hỗ trợ tập thở theo phương pháp Wim Hof. Dùng cá nhân (m�
 - **Tần số vẽ:** `loop` vẽ mỗi khung hình ở pha thở và thả lỏng, ~10 lần/giây ở pha khác, ngừng khi tạm dừng (`loopTok` chống chạy chồng). `.orb` có `will-change: transform`.
 - **Giải mã sớm:** lúc trang rảnh tạo `AudioContext` (để ở trạng thái nghỉ) và `loadVoices(lang)` giải mã 18 mp3 của ngôn ngữ đang chọn (`DECODED_BY`); đổi cờ thì giải mã ngôn ngữ kia. Tạo sớm lỗi thì tới lúc bấm Bắt đầu mới tạo. Không tập thì `AudioContext` nghỉ.
 - Giữ màn hình sáng khi tập bằng Wake Lock (nếu trình duyệt hỗ trợ).
-- Dữ liệu lưu trong `localStorage`, khoá: `whm.settings`, `whm.lang`, `whm.tab`, `whm.sound`, `whm.ack` (đã đọc cảnh báo an toàn). Không có máy chủ, không lưu lịch sử buổi tập.
+- Dữ liệu lưu trong `localStorage`, khoá: `whm.settings`, `whm.lang`, `whm.tab`, `whm.sound`, `whm.ack` (đã đọc cảnh báo an toàn), `whm.history` (`{v:1,items:[...]}`, tối đa 500 buổi, mới nhất ở cuối). Không có máy chủ.
+- **Lịch sử:** khối `/* ---------- lịch sử ---------- */` (`histLoad/histAdd/histSave/histStats`). `stopSession` ghi một bản ghi khi đã qua ít nhất một lượt nín trọn vẹn (`roundsDone ≥ 1`); dừng sớm hơn hoặc đóng trang giữa buổi thì không ghi. Cài đặt lấy từ `R.cfg` (chụp lúc bấm Bắt đầu), `secs` theo `clock()` nên bỏ qua lúc tạm dừng. Ngày tính theo giờ máy. Chưa ghi thời gian nín thật (lượt nín là đếm ngược cố định).
 - Có chế độ sáng/tối theo hệ thống.
 
 ## Bẫy khi sửa file HTML
