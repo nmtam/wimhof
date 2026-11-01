@@ -4,12 +4,13 @@ Web app hỗ trợ tập thở theo phương pháp Wim Hof. Dùng cá nhân (m�
 
 ## Trạng thái
 
-Đã có sản phẩm chạy được: một file `tho-wim-hof.html`. Chưa có bước build, không có framework, không có package.json, không có test tự động.
+Đã có sản phẩm chạy được: một file `tho-wim-hof.html`. Chưa có bước build, không có framework, không có package.json. Có test tự động cho `buildPlan` (chỉ phủ logic dựng lịch buổi tập, không phủ giao diện hay âm thanh).
 
 ## Cấu trúc
 
 - `tho-wim-hof.html` (~1,9 MB, 851 dòng): HTML + CSS + JavaScript thuần trong một file. Mở thẳng bằng trình duyệt là chạy, không cần máy chủ.
 - `resources/`: 36 file mp3 gốc (18 câu x tiếng Việt `-vi` / tiếng Anh `-en`). **App không đọc thư mục này lúc chạy**: toàn bộ mp3 đã nhúng vào HTML dạng base64. `resources/` chỉ là bản gốc để nhúng lại hoặc thay giọng.
+- `tests/`: `load-plan.mjs` cắt đoạn code `buildPlan` thật từ HTML rồi chạy trong `vm` (không sao chép code); `build-plan.test.mjs` là các ca test.
 - Phụ thuộc mạng duy nhất: font Be Vietnam Pro và Lexend từ Google Fonts. Mất mạng thì tự dùng font hệ thống, app vẫn chạy.
 
 ## Cách app hoạt động
@@ -33,6 +34,7 @@ Web app hỗ trợ tập thở theo phương pháp Wim Hof. Dùng cá nhân (m�
 - Mỗi mp3 nằm trên một dòng dạng `/*EN:ten*/ "ten":"data:audio/mpeg;base64,...",`. Giữ nguyên dấu ngoặc kép, dấu phẩy và chú thích.
 - Sửa xong phải mở trình duyệt chạy thử một buổi ngắn ở cả hai ngôn ngữ (20 hơi, 2 vòng, nín 15 giây).
 - Sao lưu hoặc dùng git trước khi sửa vì file lớn, khó xem diff.
+- **Hai chú thích mốc quanh `buildPlan`** (`/* ---------- lịch buổi tập ---------- */` và `/* ---------- âm thanh ---------- */`) cùng dòng `const TEMPO=...` được test dùng để cắt code; đổi chữ mốc phải sửa `tests/load-plan.mjs`.
 
 ## Công nghệ
 
@@ -41,7 +43,7 @@ Hiện: HTML/CSS/JS thuần, một file. Chuyển sang framework hay tách file 
 ## Lệnh thường dùng
 
 - Chạy thử: mở `tho-wim-hof.html` bằng trình duyệt.
-- Chưa có lệnh build hay test.
+- Chạy test (cần Node ≥ 20, không cần cài gì): `node --test --test-concurrency=1 tests/*.test.mjs`. Chưa có lệnh build.
 
 ## Ngôn ngữ
 
