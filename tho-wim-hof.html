@@ -757,10 +757,17 @@ function ensureAudio(){
   loadVoices(lang);
   if(AC.state!=="running") AC.resume();
 }
+/* Lời mp3 gốc đỉnh ~0,86 trong khi tiếng thở chỉ ~0,09: lời đầu buổi nổ to đột ngột. Hạ lời xuống cho cân với tiếng thở. */
+const VOICE_VOL=.5;
+function voiceSrc(buf,out){
+  const s=AC.createBufferSource(); s.buffer=buf;
+  const g=AC.createGain(); g.gain.value=VOICE_VOL; s.connect(g).connect(out);
+  return s;
+}
 function whoosh(out,at,ti,te){
   const s=AC.createBufferSource(); s.buffer=noiseBuf; s.loop=true;
   const f=AC.createBiquadFilter(); f.type="bandpass"; f.Q.value=.7;
-  const g=AC.createGain();
+  const g=AC.createGain(); g.gain.value=0; /* mặc định là 1: không để nguồn lọt ra trước khi lịch gain có hiệu lực */
   g.gain.setValueAtTime(.0001,at); g.gain.linearRampToValueAtTime(.32,at+ti*.85); g.gain.linearRampToValueAtTime(.2,at+ti); g.gain.linearRampToValueAtTime(.0001,at+ti+te);
   f.frequency.setValueAtTime(320,at); f.frequency.exponentialRampToValueAtTime(1250,at+ti); f.frequency.exponentialRampToValueAtTime(280,at+ti+te);
   s.connect(f).connect(g).connect(out); s.start(at); s.stop(at+ti+te+.05);
@@ -768,7 +775,7 @@ function whoosh(out,at,ti,te){
 }
 function chime(out,at,f0){
   return [[1,.22,3.2],[2.76,.08,1.6],[5.4,.04,.9]].map(([r,a,d])=>{
-    const o=AC.createOscillator(), g=AC.createGain(); o.type="sine"; o.frequency.value=f0*r;
+    const o=AC.createOscillator(), g=AC.createGain(); g.gain.value=0; o.type="sine"; o.frequency.value=f0*r;
     g.gain.setValueAtTime(.0001,at); g.gain.exponentialRampToValueAtTime(a,at+.01); g.gain.exponentialRampToValueAtTime(.0001,at+d);
     o.connect(g).connect(out); o.start(at); o.stop(at+d+.1);
     return o;
@@ -778,7 +785,7 @@ function startMusic(out){
   const m=AC.createGain(), now=AC.currentTime; m.gain.setValueAtTime(.0001,now); m.gain.exponentialRampToValueAtTime(.7,now+4); m.connect(out);
   const drone=[[98,.06],[147,.035],[196.5,.02]].map(([f,a])=>{const o=AC.createOscillator(),g=AC.createGain();o.frequency.value=f;g.gain.value=a;o.connect(g).connect(m);o.start();return o;});
   const strike=(t,f0)=>[[1,.09,11],[2.71,.04,7],[5.15,.018,4.5],[8.6,.008,2.5]].forEach(([r,a,d])=>[0,1.2].forEach(det=>{
-    const o=AC.createOscillator(),g=AC.createGain(); o.frequency.value=f0*r+det;
+    const o=AC.createOscillator(),g=AC.createGain(); g.gain.value=0; o.frequency.value=f0*r+det;
     g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(a,t+.03); g.gain.exponentialRampToValueAtTime(.0001,t+d);
     o.connect(g).connect(m); o.start(t); o.stop(t+d+.1); }));
   let next=now+.5, n=0; const bowls=[196,196,174.6,220];
@@ -807,7 +814,7 @@ function renderVoiceNote(){ const n=$("#vnote"); if(!n) return; n.hidden=hasVoic
 const estDur=s=>Math.max(1.4,s.length*.075);
 function say(key,text,out,onend,lg=lang){
   const buf=VOICE_BUF[lg+":"+key];
-  if(sound&&buf){ const s=AC.createBufferSource(); s.buffer=buf; s.connect(out); if(onend) s.onended=()=>onend(buf.duration); s.start(); return; }
+  if(sound&&buf){ const s=voiceSrc(buf,out); if(onend) s.onended=()=>onend(buf.duration); s.start(); return; }
   const v=ttsVoice[lg];
   if(sound&&v&&window.speechSynthesis){
     const u=new SpeechSynthesisUtterance(text); u.voice=v; u.lang=v.lang; u.rate=.92;
@@ -835,9 +842,10 @@ let starting=false;
 async function startSession(){
   if(starting||R) return; starting=true;
   ensureAudio();
-  if(window.speechSynthesis){ try{ const u=new SpeechSynthesisUtterance(" "); u.volume=0; speechSynthesis.speak(u); }catch(e){} }
+  if(window.speechSynthesis&&Object.keys(VOICE_FILES[lang]||{}).length<18){ try{ const u=new SpeechSynthesisUtterance(" "); u.volume=0; speechSynthesis.speak(u); }catch(e){} }
   await Promise.race([loadVoices(lang),new Promise(r=>setTimeout(r,4000))]); starting=false;
-  const out=AC.createGain(); out.connect(master);
+  /* mở dần âm lượng 0,6 giây đầu (lời đầu tiên hẹn lúc 0,8 giây): tránh tiếng bật đột ngột khi loa/tai nghe vừa mở */
+  const out=AC.createGain(), t0=AC.currentTime; out.gain.setValueAtTime(0,t0); out.gain.linearRampToValueAtTime(1,t0+.6); out.connect(master);
   R={plan:buildPlan(S),cfg:Object.assign({},S),startedAt:Date.now(),t0:AC.currentTime,paused:false,pausedAt:0,ei:0,nodes:[],out,cue:"",closing:false,mu:null,tok:Math.random()};
   const r=R; scheduleAll(r);
   loadVoices(lang).then(()=>{ if(R===r) scheduleVoices(r); }); /* giải mã xong sau 4 giây chờ thì vẫn hẹn được */
@@ -872,7 +880,7 @@ function scheduleVoices(r){
     if(e.t>=c+AHEAD) break;
     if(!e.key||e.src||e.t<c+.05) continue;
     const buf=VOICE_BUF[lang+":"+e.key]; if(!buf) continue;
-    const s=AC.createBufferSource(); s.buffer=buf; s.connect(r.out); s.start(r.t0+e.t); e.src=s; r.nodes.push({n:s,end:e.t+buf.duration});
+    const s=voiceSrc(buf,r.out); s.start(r.t0+e.t); e.src=s; r.nodes.push({n:s,end:e.t+buf.duration});
   }
 }
 /* Đổi ngôn ngữ giữa buổi: huỷ lời đã hẹn chưa phát, hẹn lại bằng giọng mới khi giải mã xong. */
