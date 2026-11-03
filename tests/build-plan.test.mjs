@@ -20,10 +20,10 @@ const count = (plan, pred) => plan.ev.filter(pred).length;
 describe("defaults", () => {
   const plan = buildPlan(DEF);
 
-  test("total is 591.75 s", () => {
-    // Hand-computed: std bt = 2.5+1.35 = 3.85; breathe = 29*3.85 + 2.5 + 2.5 = 116.65;
-    // rounds 116.65+30+15+4+2.5 = 168.15, 116.65+60+15+4+2.5 = 198.15, 116.65+90+15+3 = 224.65; +0.8 lead-in.
-    near(plan.total, 591.75, 0.01);
+  test("total is 591.15 s", () => {
+    // Hand-computed: std in 2.3 + out 1.55 = 3.85; breathe = 29*3.85 + 2.3 + 2.5 = 116.45;
+    // rounds 116.45+30+15+4+2.5 = 167.95, 116.45+60+15+4+2.5 = 197.95, 116.45+90+15+3 = 224.45; +0.8 lead-in.
+    near(plan.total, 591.15, 0.01);
   });
 
   test("phase counts", () => {
@@ -46,14 +46,14 @@ describe("defaults", () => {
     assert.equal(byKey(r0, "hit-vao").length, 3);
     assert.equal(byKey(r0, "tho-ra").length, 3);
     byKey(r0, "hit-vao").forEach((e, i) => near(e.t, [0.8, 4.65, 8.5][i]));
-    byKey(r0, "tho-ra").forEach((e, i) => near(e.t, [3.3, 7.15, 11.0][i]));
+    byKey(r0, "tho-ra").forEach((e, i) => near(e.t, [3.1, 6.95, 10.8][i]));
   });
 });
 
 test("breathe duration per speed (30 breaths)", () => {
-  // Hand-computed (N-1)*(in+out) + in + 2.5 last exhale:
-  // std 29*3.85+2.5+2.5 = 116.65, fast 29*3.1+2+2.5 = 94.4, slow 29*4.6+3+2.5 = 138.9.
-  for (const [speed, dur] of [["std", 116.65], ["fast", 94.4], ["slow", 138.9]]) {
+  // Hand-computed (N-1)*(in+out) + in + 2.5 last exhale, in 2.3/1.8/2.8:
+  // std 29*3.85+2.3+2.5 = 116.45, fast 29*3.1+1.8+2.5 = 94.2, slow 29*4.6+2.8+2.5 = 138.7.
+  for (const [speed, dur] of [["std", 116.45], ["fast", 94.2], ["slow", 138.7]]) {
     const b = ofType(buildPlan({ ...DEF, speed }), "breathe");
     for (const p of b) near(p.dur, dur, EPS, `${speed}: expected ${dur}, got ${p.dur}`);
   }
@@ -63,7 +63,7 @@ test("single round: no next phase, final rest has no pause", () => {
   const plan = buildPlan({ ...DEF, rounds: 1 });
   assert.equal(ofType(plan, "next").length, 0);
   assert.deepEqual(ofType(plan, "rest").map(p => p.dur), [3]);
-  near(plan.total, 0.8 + 116.65 + 30 + 15 + 3); // 165.45
+  near(plan.total, 0.8 + 116.45 + 30 + 15 + 3); // 165.25
 });
 
 /* ---------- invariants over the app's limit corners ---------- */
@@ -166,7 +166,7 @@ describe("edges", () => {
     near(byKey(evs, "vong-tron")[0].t, 16.2);
     near(byKey(evs, "con-10")[0].t, 39.3);
     near(byKey(evs, "con-5")[0].t, 58.55);
-    near(b.dur, 19 * 3.85 + 5); // 78.15
+    near(b.dur, 19 * 3.85 + 4.8); // 77.95
   });
 });
 
